@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  evolution-api-mcp:
+    build: .
+    container_name: evolution-api-mcp
+    ports:
+      - "8002:8002"  # SSE port only
+    volumes:
+      - ./src:/app/src
+      - ./logs:/app/logs
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - EVOLUTION_API_URL=${EVOLUTION_API_URL:-http://localhost:3000}
+      - EVOLUTION_API_KEY=${EVOLUTION_API_KEY:-your-api-key}
+      - ENABLE_API_LOGGING=${ENABLE_API_LOGGING:-true}
+      - MCP_HOST=${MCP_HOST:-0.0.0.0}
+      - MCP_PORT=${MCP_PORT:-8002}
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "bash", "/app/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - evolution-network
+
+networks:
+  evolution-network:
+    driver: bridge 
