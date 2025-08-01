@@ -4,9 +4,9 @@ from ..base_routes import BaseRoutes
 from .client import MessageClient
 
 class ButtonModel(BaseModel):
-    title: str = Field(description="Título del botón")
-    displayText: str = Field(description="Texto a mostrar en el botón")
-    id: str = Field(description="Identificador único del botón")
+    buttonId: str = Field(description="Identificador único del botón")
+    buttonText: str = Field(description="Texto a mostrar en el botón")
+    type: str = Field(default="RESPONSE", description="Tipo de botón (RESPONSE, CALL, URL)")
 
 class ListRowModel(BaseModel):
     title: str = Field(description="Título de la fila")
@@ -294,7 +294,11 @@ class MessageRoutes(BaseRoutes):
                     number=number,
                     title=title,
                     description=description,
-                    buttons=[button.dict() for button in buttons],
+                    buttons=[{
+                        "buttonId": button.buttonId,
+                        "buttonText": {"displayText": button.buttonText},
+                        "type": button.type
+                    } for button in buttons],
                     footer=footer,
                     delay=delay,
                     link_preview=link_preview,

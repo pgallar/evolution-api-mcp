@@ -170,14 +170,13 @@ class MessageClient(EvolutionAPIClient):
         """Enviar mensaje con botones"""
         data = {
             "number": number,
-            "title": title,
-            "description": description
+            "buttonText": title,  # El título se usa como texto del botón
+            "text": description,  # La descripción se usa como texto principal
+            "buttons": buttons or []  # Aseguramos que siempre haya una lista de botones
         }
-
+        
         if footer is not None:
-            data["footer"] = footer
-        if buttons is not None:
-            data["buttons"] = buttons
+            data["footerText"] = footer
         if delay is not None:
             data["delay"] = delay
         if link_preview is not None:
