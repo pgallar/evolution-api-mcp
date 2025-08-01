@@ -160,7 +160,7 @@ class MessageClient(EvolutionAPIClient):
         title: str,
         description: str,
         footer: Optional[str] = None,
-        buttons: Optional[List[Dict[str, str]]] = None,
+        buttons: Optional[List[Dict[str, Any]]] = None,
         delay: Optional[int] = None,
         link_preview: Optional[bool] = None,
         mentions_everyone: Optional[bool] = None,
@@ -169,24 +169,24 @@ class MessageClient(EvolutionAPIClient):
     ) -> Dict[str, Any]:
         """Enviar mensaje con botones"""
         data = {
-            "number": number,
-            "buttonText": title,  # El título se usa como texto del botón
-            "text": description,  # La descripción se usa como texto principal
-            "buttons": buttons or []  # Aseguramos que siempre haya una lista de botones
+            "number": str(number),
+            "buttonText": str(title),  # El título se usa como texto del botón
+            "text": str(description),  # La descripción se usa como texto principal
+            "buttons": buttons or []  # Los botones ya vienen formateados correctamente
         }
         
         if footer is not None:
-            data["footerText"] = footer
+            data["footerText"] = str(footer)
         if delay is not None:
-            data["delay"] = delay
+            data["delay"] = delay  # Mantener como int
         if link_preview is not None:
-            data["linkPreview"] = link_preview
+            data["linkPreview"] = link_preview  # Mantener como bool
         if mentions_everyone is not None:
-            data["mentionsEveryOne"] = mentions_everyone
+            data["mentionsEveryOne"] = mentions_everyone  # Mantener como bool
         if mentioned is not None:
-            data["mentioned"] = mentioned
+            data["mentioned"] = [str(m) for m in mentioned]  # Convertir cada mención a string
         if quoted is not None:
-            data["quoted"] = quoted
+            data["quoted"] = quoted  # Mantener la estructura original
 
         return await self.post(f"/message/sendButtons/{instance_name}", json=data)
 

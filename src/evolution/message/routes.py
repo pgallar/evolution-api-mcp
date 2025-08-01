@@ -8,6 +8,16 @@ class ButtonModel(BaseModel):
     buttonText: str = Field(description="Texto a mostrar en el botón")
     type: str = Field(default="RESPONSE", description="Tipo de botón (RESPONSE, CALL, URL)")
 
+    def dict(self, *args, **kwargs):
+        """Sobrescribir el método dict para formatear correctamente la estructura del botón"""
+        return {
+            "buttonId": str(self.buttonId),  # Asegurar que sea string
+            "buttonText": {
+                "displayText": str(self.buttonText)  # Asegurar que sea string
+            },
+            "type": str(self.type)  # Asegurar que sea string
+        }
+
 class ListRowModel(BaseModel):
     title: str = Field(description="Título de la fila")
     description: str = Field(description="Descripción de la fila")
@@ -289,17 +299,15 @@ class MessageRoutes(BaseRoutes):
             """Enviar mensaje con botones"""
             try:
                 self.client = MessageClient()
+                # Convertir los botones usando el método dict personalizado
+                formatted_buttons = [button.dict() for button in buttons]
                 result = await self.client.send_buttons(
                     instance_name=instance_name,
-                    number=number,
-                    title=title,
-                    description=description,
-                    buttons=[{
-                        "buttonId": button.buttonId,
-                        "buttonText": {"displayText": button.buttonText},
-                        "type": button.type
-                    } for button in buttons],
-                    footer=footer,
+                    number=str(number),  # Asegurar que sea string
+                    title=str(title),  # Asegurar que sea string
+                    description=str(description),  # Asegurar que sea string
+                    buttons=formatted_buttons,
+                    footer=str(footer) if footer is not None else None,
                     delay=delay,
                     link_preview=link_preview,
                     mentions_everyone=mentions_everyone,
