@@ -4,17 +4,18 @@ from ..base_routes import BaseRoutes
 from .client import MessageClient
 
 class ButtonModel(BaseModel):
-    type: str = Field(description="Tipo de botón (reply)")
-    reply: dict = Field(description="Datos del botón de respuesta")
+    buttonId: str = Field(description="Identificador único del botón")
+    buttonText: dict = Field(description="Texto del botón")
+    type: int = Field(default=1, description="Tipo de botón")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "type": "reply",
-                "reply": {
-                    "id": "btn_si",
-                    "title": "Sí"
-                }
+                "buttonId": "btn_si",
+                "buttonText": {
+                    "displayText": "Sí"
+                },
+                "type": 1
             }
         }
 
@@ -299,13 +300,13 @@ class MessageRoutes(BaseRoutes):
             """Enviar mensaje con botones"""
             try:
                 self.client = MessageClient()
-                # Formatear los botones según la estructura requerida
+                # Formatear los botones según la estructura requerida por la API
                 formatted_buttons = []
                 for button in buttons:
                     formatted_button = {
-                        "title": str(button.reply.get("title", "")),
-                        "displayText": str(button.reply.get("title", "")),  # Usar el mismo título como displayText
-                        "id": str(button.reply.get("id", ""))
+                        "title": str(button.buttonText.get("displayText", "")),
+                        "displayText": str(button.buttonText.get("displayText", "")),
+                        "id": str(button.buttonId)
                     }
                     formatted_buttons.append(formatted_button)
 

@@ -168,13 +168,13 @@ class MessageClient(EvolutionAPIClient):
         quoted: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Enviar mensaje con botones"""
-        # Asegurarnos de que cada botón tenga la estructura correcta
+        # Asegurarnos de que cada botón tenga la estructura correcta según la API
         formatted_buttons = []
         if buttons:
             for button in buttons:
                 formatted_button = {
                     "title": str(button.get("title", "")),
-                    "displayText": str(button.get("displayText", button.get("title", ""))),  # Usar title como fallback
+                    "displayText": str(button.get("displayText", "")),
                     "id": str(button.get("id", ""))
                 }
                 formatted_buttons.append(formatted_button)
