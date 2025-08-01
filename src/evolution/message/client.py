@@ -151,4 +151,82 @@ class MessageClient(EvolutionAPIClient):
             "allContacts": allContacts,
             **({"statusJidList": statusJidList} if statusJidList else [])
         }
-        return await self.post(f"message/sendStatus/{instance_name}", json=data) 
+        return await self.post(f"message/sendStatus/{instance_name}", json=data)
+
+    async def send_buttons(
+        self,
+        instance_name: str,
+        number: str,
+        title: str,
+        description: str,
+        footer: Optional[str] = None,
+        buttons: Optional[List[Dict[str, str]]] = None,
+        delay: Optional[int] = None,
+        link_preview: Optional[bool] = None,
+        mentions_everyone: Optional[bool] = None,
+        mentioned: Optional[List[str]] = None,
+        quoted: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Enviar mensaje con botones"""
+        data = {
+            "number": number,
+            "title": title,
+            "description": description
+        }
+
+        if footer is not None:
+            data["footer"] = footer
+        if buttons is not None:
+            data["buttons"] = buttons
+        if delay is not None:
+            data["delay"] = delay
+        if link_preview is not None:
+            data["linkPreview"] = link_preview
+        if mentions_everyone is not None:
+            data["mentionsEveryOne"] = mentions_everyone
+        if mentioned is not None:
+            data["mentioned"] = mentioned
+        if quoted is not None:
+            data["quoted"] = quoted
+
+        return await self.post(f"/message/sendButtons/{instance_name}", json=data)
+
+    async def send_list(
+        self,
+        instance_name: str,
+        number: str,
+        title: str,
+        description: str,
+        button_text: str,
+        footer_text: Optional[str] = None,
+        values: Optional[List[Dict[str, Any]]] = None,
+        delay: Optional[int] = None,
+        link_preview: Optional[bool] = None,
+        mentions_everyone: Optional[bool] = None,
+        mentioned: Optional[List[str]] = None,
+        quoted: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Enviar mensaje con lista"""
+        data = {
+            "number": number,
+            "title": title,
+            "description": description,
+            "buttonText": button_text
+        }
+
+        if footer_text is not None:
+            data["footerText"] = footer_text
+        if values is not None:
+            data["values"] = values
+        if delay is not None:
+            data["delay"] = delay
+        if link_preview is not None:
+            data["linkPreview"] = link_preview
+        if mentions_everyone is not None:
+            data["mentionsEveryOne"] = mentions_everyone
+        if mentioned is not None:
+            data["mentioned"] = mentioned
+        if quoted is not None:
+            data["quoted"] = quoted
+
+        return await self.post(f"/message/sendList/{instance_name}", json=data) 

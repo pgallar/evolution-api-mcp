@@ -3,6 +3,20 @@ from pydantic import BaseModel, Field
 from ..base_routes import BaseRoutes
 from .client import MessageClient
 
+class ButtonModel(BaseModel):
+    title: str = Field(description="Título del botón")
+    displayText: str = Field(description="Texto a mostrar en el botón")
+    id: str = Field(description="Identificador único del botón")
+
+class ListRowModel(BaseModel):
+    title: str = Field(description="Título de la fila")
+    description: str = Field(description="Descripción de la fila")
+    rowId: str = Field(description="Identificador único de la fila")
+
+class ListSectionModel(BaseModel):
+    title: str = Field(description="Título de la sección")
+    rows: List[ListRowModel] = Field(description="Filas de la sección")
+
 class MessageRoutes(BaseRoutes):
     def register_tools(self, mcp):
         @mcp.tool(
@@ -253,4 +267,86 @@ class MessageRoutes(BaseRoutes):
                     "result": result
                 }
             except Exception as e:
-                return {"error": f"Error enviando estado: {str(e)}"} 
+                return {"error": f"Error enviando estado: {str(e)}"}
+
+        @mcp.tool(
+            description="Enviar mensaje con botones",
+            tags={"message", "buttons"}
+        )
+        async def send_buttons(
+            instance_name: str,
+            number: str,
+            title: str,
+            description: str,
+            buttons: List[ButtonModel],
+            footer: Optional[str] = None,
+            delay: Optional[int] = None,
+            link_preview: Optional[bool] = None,
+            mentions_everyone: Optional[bool] = None,
+            mentioned: Optional[List[str]] = None,
+            quoted: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
+            """Enviar mensaje con botones"""
+            try:
+                self.client = MessageClient()
+                result = await self.client.send_buttons(
+                    instance_name=instance_name,
+                    number=number,
+                    title=title,
+                    description=description,
+                    buttons=[button.dict() for button in buttons],
+                    footer=footer,
+                    delay=delay,
+                    link_preview=link_preview,
+                    mentions_everyone=mentions_everyone,
+                    mentioned=mentioned,
+                    quoted=quoted
+                )
+                return {
+                    "success": True,
+                    "result": result
+                }
+            except Exception as e:
+                return {"error": f"Error enviando mensaje con botones: {str(e)}"}
+
+        @mcp.tool(
+            description="Enviar mensaje con lista",
+            tags={"message", "list"}
+        )
+        async def send_list(
+            instance_name: str,
+            number: str,
+            title: str,
+            description: str,
+            button_text: str,
+            values: List[ListSectionModel],
+            footer_text: Optional[str] = None,
+            delay: Optional[int] = None,
+            link_preview: Optional[bool] = None,
+            mentions_everyone: Optional[bool] = None,
+            mentioned: Optional[List[str]] = None,
+            quoted: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
+            """Enviar mensaje con lista"""
+            try:
+                self.client = MessageClient()
+                result = await self.client.send_list(
+                    instance_name=instance_name,
+                    number=number,
+                    title=title,
+                    description=description,
+                    button_text=button_text,
+                    values=[section.dict() for section in values],
+                    footer_text=footer_text,
+                    delay=delay,
+                    link_preview=link_preview,
+                    mentions_everyone=mentions_everyone,
+                    mentioned=mentioned,
+                    quoted=quoted
+                )
+                return {
+                    "success": True,
+                    "result": result
+                }
+            except Exception as e:
+                return {"error": f"Error enviando mensaje con lista: {str(e)}"} 
