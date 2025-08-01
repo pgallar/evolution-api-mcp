@@ -174,7 +174,7 @@ class MessageClient(EvolutionAPIClient):
             for button in buttons:
                 formatted_button = {
                     "title": str(button.get("title", "")),
-                    "displayText": str(button.get("displayText", "")),
+                    "displayText": str(button.get("displayText", button.get("title", ""))),  # Usar title como fallback
                     "id": str(button.get("id", ""))
                 }
                 formatted_buttons.append(formatted_button)
