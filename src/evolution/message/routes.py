@@ -3,9 +3,12 @@ from pydantic import BaseModel, Field
 from ..base_routes import BaseRoutes
 from .client import MessageClient
 
+class ButtonTextModel(BaseModel):
+    displayText: str = Field(description="Texto a mostrar en el botón")
+
 class ButtonModel(BaseModel):
     buttonId: str = Field(description="Identificador único del botón")
-    buttonText: dict = Field(description="Texto del botón")
+    buttonText: ButtonTextModel = Field(description="Texto del botón")
     type: int = Field(default=1, description="Tipo de botón")
 
     class Config:
@@ -289,7 +292,7 @@ class MessageRoutes(BaseRoutes):
             number: str,
             title: str,
             description: str,
-            buttons: List[ButtonModel],
+            buttons: List[Dict[str, Any]],  # Cambiado para aceptar diccionarios directamente
             footer: Optional[str] = None,
             delay: Optional[int] = None,
             link_preview: Optional[bool] = None,
@@ -299,14 +302,23 @@ class MessageRoutes(BaseRoutes):
         ) -> Dict[str, Any]:
             """Enviar mensaje con botones"""
             try:
+                # Validar y convertir los botones usando el modelo
+                validated_buttons = []
+                for button_data in buttons:
+                    # Si buttonText es un string, convertirlo al formato correcto
+                    if isinstance(button_data.get('buttonText'), str):
+                        button_data['buttonText'] = {'displayText': button_data['buttonText']}
+                    button = ButtonModel(**button_data)
+                    validated_buttons.append(button)
+
                 self.client = MessageClient()
                 # Formatear los botones según la estructura requerida por la API
                 formatted_buttons = []
-                for button in buttons:
+                for button in validated_buttons:
                     formatted_button = {
-                        "title": str(button.buttonText.get("displayText", "")),
-                        "displayText": str(button.buttonText.get("displayText", "")),
-                        "id": str(button.buttonId)
+                        "title": button.buttonText.displayText,
+                        "displayText": button.buttonText.displayText,
+                        "id": button.buttonId
                     }
                     formatted_buttons.append(formatted_button)
 

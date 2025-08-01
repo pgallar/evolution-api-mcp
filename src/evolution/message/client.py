@@ -168,36 +168,27 @@ class MessageClient(EvolutionAPIClient):
         quoted: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Enviar mensaje con botones"""
-        # Asegurarnos de que cada botón tenga la estructura correcta según la API
-        formatted_buttons = []
-        if buttons:
-            for button in buttons:
-                formatted_button = {
-                    "title": str(button.get("title", "")),
-                    "displayText": str(button.get("displayText", "")),
-                    "id": str(button.get("id", ""))
-                }
-                formatted_buttons.append(formatted_button)
-
+        # Construir el payload según la estructura de la API
         data = {
             "number": str(number),
             "title": str(title),
             "description": str(description),
-            "buttons": formatted_buttons
+            "buttons": buttons or []
         }
         
-        if footer is not None:
+        # Agregar campos opcionales solo si tienen valor
+        if footer:
             data["footer"] = str(footer)
         if delay is not None:
-            data["delay"] = delay  # Mantener como int
+            data["delay"] = delay
         if link_preview is not None:
-            data["linkPreview"] = link_preview  # Mantener como bool
+            data["linkPreview"] = link_preview
         if mentions_everyone is not None:
-            data["mentionsEveryOne"] = mentions_everyone  # Mantener como bool
-        if mentioned is not None:
-            data["mentioned"] = [str(m) for m in mentioned]  # Convertir cada mención a string
-        if quoted is not None:
-            data["quoted"] = quoted  # Mantener la estructura original
+            data["mentionsEveryOne"] = mentions_everyone
+        if mentioned:
+            data["mentioned"] = [str(m) for m in mentioned]
+        if quoted:
+            data["quoted"] = quoted
 
         return await self.post(f"/message/sendButtons/{instance_name}", json=data)
 
