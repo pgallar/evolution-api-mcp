@@ -4,18 +4,17 @@ from ..base_routes import BaseRoutes
 from .client import MessageClient
 
 class ButtonModel(BaseModel):
-    buttonId: str = Field(description="Identificador único del botón")
-    buttonText: str = Field(description="Texto a mostrar en el botón")
-    type: str = Field(default="RESPONSE", description="Tipo de botón (RESPONSE, CALL, URL)")
+    title: str = Field(description="Título del botón")
+    displayText: str = Field(description="Texto a mostrar en el botón")
+    id: str = Field(description="Identificador único del botón")
 
-    def dict(self, *args, **kwargs):
-        """Sobrescribir el método dict para formatear correctamente la estructura del botón"""
-        return {
-            "buttonId": str(self.buttonId),  # Asegurar que sea string
-            "buttonText": {
-                "displayText": str(self.buttonText)  # Asegurar que sea string
-            },
-            "type": str(self.type)  # Asegurar que sea string
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "title": "Botón 1",
+                "displayText": "Click aquí",
+                "id": "btn1"
+            }
         }
 
 class ListRowModel(BaseModel):
@@ -299,14 +298,12 @@ class MessageRoutes(BaseRoutes):
             """Enviar mensaje con botones"""
             try:
                 self.client = MessageClient()
-                # Convertir los botones usando el método dict personalizado
-                formatted_buttons = [button.dict() for button in buttons]
                 result = await self.client.send_buttons(
                     instance_name=instance_name,
-                    number=str(number),  # Asegurar que sea string
-                    title=str(title),  # Asegurar que sea string
-                    description=str(description),  # Asegurar que sea string
-                    buttons=formatted_buttons,
+                    number=str(number),
+                    title=str(title),
+                    description=str(description),
+                    buttons=[button.dict() for button in buttons],
                     footer=str(footer) if footer is not None else None,
                     delay=delay,
                     link_preview=link_preview,
