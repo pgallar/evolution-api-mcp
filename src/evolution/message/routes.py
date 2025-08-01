@@ -3,24 +3,37 @@ from pydantic import BaseModel, Field
 from ..base_routes import BaseRoutes
 from .client import MessageClient
 
-class ButtonTextModel(BaseModel):
-    displayText: str = Field(description="Texto a mostrar en el botón")
-
 class ButtonModel(BaseModel):
-    buttonId: str = Field(description="Identificador único del botón")
-    buttonText: ButtonTextModel = Field(description="Texto del botón")
-    type: int = Field(default=1, description="Tipo de botón")
+    type: str = Field(description="Tipo de botón (reply, url, call, copy, pix)")
+    reply: Optional[Dict[str, str]] = Field(description="Datos del botón de respuesta")
+    url: Optional[str] = Field(description="URL para botón de enlace")
+    phoneNumber: Optional[str] = Field(description="Número de teléfono para botón de llamada")
+    copyCode: Optional[str] = Field(description="Código para botón de copiar")
+    displayText: Optional[str] = Field(description="Texto a mostrar en el botón")
+    id: Optional[str] = Field(description="Identificador único del botón")
+    currency: Optional[str] = Field(description="Moneda para botón PIX")
+    name: Optional[str] = Field(description="Nombre para botón PIX")
+    keyType: Optional[str] = Field(description="Tipo de clave PIX (phone, email, cpf, cnpj, random)")
+    key: Optional[str] = Field(description="Clave PIX")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "buttonId": "btn_si",
-                "buttonText": {
-                    "displayText": "Sí"
-                },
-                "type": 1
+                "type": "reply",
+                "reply": {
+                    "id": "btn_si",
+                    "title": "Sí"
+                }
             }
         }
+
+class PTVModel(BaseModel):
+    number: str = Field(description="Número de destino")
+    video: str = Field(description="URL o base64 del video")
+    delay: Optional[int] = Field(description="Retraso en milisegundos")
+    quoted: Optional[Dict[str, Any]] = Field(description="Mensaje citado")
+    mentions_everyone: Optional[bool] = Field(description="Mencionar a todos")
+    mentioned: Optional[List[str]] = Field(description="Lista de números mencionados")
 
 class ListRowModel(BaseModel):
     title: str = Field(description="Título de la fila")
@@ -284,6 +297,38 @@ class MessageRoutes(BaseRoutes):
                 return {"error": f"Error enviando estado: {str(e)}"}
 
         @mcp.tool(
+            description="Enviar video PTV",
+            tags={"message", "ptv"}
+        )
+        async def send_ptv(
+            instance_name: str,
+            number: str,
+            video: str,
+            delay: Optional[int] = None,
+            quoted: Optional[Dict[str, Any]] = None,
+            mentions_everyone: Optional[bool] = None,
+            mentioned: Optional[List[str]] = None
+        ) -> Dict[str, Any]:
+            """Enviar video PTV (Play Through Video)"""
+            try:
+                self.client = MessageClient()
+                result = await self.client.send_ptv(
+                    instance_name=instance_name,
+                    number=number,
+                    video=video,
+                    delay=delay,
+                    quoted=quoted,
+                    mentions_everyone=mentions_everyone,
+                    mentioned=mentioned
+                )
+                return {
+                    "success": True,
+                    "result": result
+                }
+            except Exception as e:
+                return {"error": f"Error enviando video PTV: {str(e)}"}
+
+        @mcp.tool(
             description="Enviar mensaje con botones",
             tags={"message", "buttons"}
         )
@@ -305,17 +350,23 @@ class MessageRoutes(BaseRoutes):
                 # Validar y convertir los botones usando el modelo
                 validated_buttons = []
                 for i, button_data in enumerate(buttons):
-                    # Manejar el caso donde solo se proporciona displayText
-                    if "displayText" in button_data and "buttonId" not in button_data:
-                        display_text = button_data["displayText"]
+                    # Convertir formato antiguo al nuevo si es necesario
+                    if "displayText" in button_data:
                         button_data = {
-                            "buttonId": f"btn_{i + 1}",
-                            "buttonText": {"displayText": display_text},
-                            "type": 1
+                            "type": "reply",
+                            "reply": {
+                                "id": button_data.get("buttonId", f"btn_{i + 1}"),
+                                "title": button_data["displayText"]
+                            }
                         }
-                    # Si buttonText es un string, convertirlo al formato correcto
-                    elif isinstance(button_data.get('buttonText'), str):
-                        button_data['buttonText'] = {'displayText': button_data['buttonText']}
+                    elif "buttonText" in button_data:
+                        button_data = {
+                            "type": "reply",
+                            "reply": {
+                                "id": button_data["buttonId"],
+                                "title": button_data["buttonText"]["displayText"]
+                            }
+                        }
                     
                     button = ButtonModel(**button_data)
                     validated_buttons.append(button)
@@ -324,11 +375,40 @@ class MessageRoutes(BaseRoutes):
                 # Formatear los botones según la estructura requerida por la API
                 formatted_buttons = []
                 for button in validated_buttons:
-                    formatted_button = {
-                        "title": button.buttonText.displayText,
-                        "displayText": button.buttonText.displayText,
-                        "id": button.buttonId
-                    }
+                    if button.type == "reply":
+                        formatted_button = {
+                            "type": "reply",
+                            "reply": {
+                                "id": button.reply["id"],
+                                "title": button.reply["title"]
+                            }
+                        }
+                    elif button.type == "url":
+                        formatted_button = {
+                            "type": "url",
+                            "displayText": button.displayText,
+                            "url": button.url
+                        }
+                    elif button.type == "call":
+                        formatted_button = {
+                            "type": "call",
+                            "displayText": button.displayText,
+                            "phoneNumber": button.phoneNumber
+                        }
+                    elif button.type == "copy":
+                        formatted_button = {
+                            "type": "copy",
+                            "displayText": button.displayText,
+                            "copyCode": button.copyCode
+                        }
+                    elif button.type == "pix":
+                        formatted_button = {
+                            "type": "pix",
+                            "currency": button.currency,
+                            "name": button.name,
+                            "keyType": button.keyType,
+                            "key": button.key
+                        }
                     formatted_buttons.append(formatted_button)
 
                 result = await self.client.send_buttons(
@@ -392,3 +472,71 @@ class MessageRoutes(BaseRoutes):
                 }
             except Exception as e:
                 return {"error": f"Error enviando mensaje con lista: {str(e)}"} 
+
+        @mcp.tool(
+            description="Enviar archivo multimedia",
+            tags={"message", "media"}
+        )
+        async def send_media_file(
+            instance_name: str,
+            number: str,
+            file: bytes,
+            filename: str,
+            caption: Optional[str] = None,
+            delay: Optional[int] = None,
+            quoted: Optional[Dict[str, Any]] = None,
+            mentions_everyone: Optional[bool] = None,
+            mentioned: Optional[List[str]] = None
+        ) -> Dict[str, Any]:
+            """Enviar archivo multimedia"""
+            try:
+                self.client = MessageClient()
+                result = await self.client.send_media_file(
+                    instance_name=instance_name,
+                    number=number,
+                    file=file,
+                    filename=filename,
+                    caption=caption,
+                    delay=delay,
+                    quoted=quoted,
+                    mentions_everyone=mentions_everyone,
+                    mentioned=mentioned
+                )
+                return {
+                    "success": True,
+                    "result": result
+                }
+            except Exception as e:
+                return {"error": f"Error enviando archivo multimedia: {str(e)}"}
+
+        @mcp.tool(
+            description="Enviar archivo PTV",
+            tags={"message", "ptv"}
+        )
+        async def send_ptv_file(
+            instance_name: str,
+            number: str,
+            file: bytes,
+            delay: Optional[int] = None,
+            quoted: Optional[Dict[str, Any]] = None,
+            mentions_everyone: Optional[bool] = None,
+            mentioned: Optional[List[str]] = None
+        ) -> Dict[str, Any]:
+            """Enviar archivo PTV (Play Through Video)"""
+            try:
+                self.client = MessageClient()
+                result = await self.client.send_ptv_file(
+                    instance_name=instance_name,
+                    number=number,
+                    file=file,
+                    delay=delay,
+                    quoted=quoted,
+                    mentions_everyone=mentions_everyone,
+                    mentioned=mentioned
+                )
+                return {
+                    "success": True,
+                    "result": result
+                }
+            except Exception as e:
+                return {"error": f"Error enviando archivo PTV: {str(e)}"} 

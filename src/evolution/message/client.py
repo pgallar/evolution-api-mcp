@@ -153,6 +153,73 @@ class MessageClient(EvolutionAPIClient):
         }
         return await self.post(f"message/sendStatus/{instance_name}", json=data)
 
+    async def send_ptv(
+        self,
+        instance_name: str,
+        number: str,
+        video: str,
+        delay: Optional[int] = None,
+        quoted: Optional[Dict[str, Any]] = None,
+        mentions_everyone: Optional[bool] = None,
+        mentioned: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Send a PTV (Play Through Video) message"""
+        data = {
+            "number": number,
+            "video": video,
+            **({"delay": delay} if delay else {}),
+            **({"quoted": quoted} if quoted else {}),
+            **({"mentionsEveryOne": mentions_everyone} if mentions_everyone is not None else {}),
+            **({"mentioned": mentioned} if mentioned else {})
+        }
+        return await self.post(f"/message/sendPtv/{instance_name}", json=data)
+
+    async def send_media_file(
+        self,
+        instance_name: str,
+        number: str,
+        file: bytes,
+        filename: str,
+        caption: Optional[str] = None,
+        delay: Optional[int] = None,
+        quoted: Optional[Dict[str, Any]] = None,
+        mentions_everyone: Optional[bool] = None,
+        mentioned: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Send a media file message"""
+        data = {
+            "number": number,
+            "file": file,
+            "fileName": filename,
+            **({"caption": caption} if caption else {}),
+            **({"delay": delay} if delay else {}),
+            **({"quoted": quoted} if quoted else {}),
+            **({"mentionsEveryOne": mentions_everyone} if mentions_everyone is not None else {}),
+            **({"mentioned": mentioned} if mentioned else {})
+        }
+        return await self.post(f"/message/sendMedia/{instance_name}", json=data)
+
+    async def send_ptv_file(
+        self,
+        instance_name: str,
+        number: str,
+        file: bytes,
+        delay: Optional[int] = None,
+        quoted: Optional[Dict[str, Any]] = None,
+        mentions_everyone: Optional[bool] = None,
+        mentioned: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """Send a PTV file message"""
+        data = {
+            "number": number,
+            "file": file,
+            **({"delay": delay} if delay else {}),
+            **({"quoted": quoted} if quoted else {}),
+            **({"mentionsEveryOne": mentions_everyone} if mentions_everyone is not None else {}),
+            **({"mentioned": mentioned} if mentioned else {})
+        }
+        return await self.post(f"/message/sendPtv/{instance_name}", json=data)
+
     async def send_buttons(
         self,
         instance_name: str,
