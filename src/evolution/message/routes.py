@@ -292,7 +292,7 @@ class MessageRoutes(BaseRoutes):
             number: str,
             title: str,
             description: str,
-            buttons: List[Dict[str, Any]],  # Cambiado para aceptar diccionarios directamente
+            buttons: List[Dict[str, Any]],
             footer: Optional[str] = None,
             delay: Optional[int] = None,
             link_preview: Optional[bool] = None,
@@ -304,10 +304,19 @@ class MessageRoutes(BaseRoutes):
             try:
                 # Validar y convertir los botones usando el modelo
                 validated_buttons = []
-                for button_data in buttons:
+                for i, button_data in enumerate(buttons):
+                    # Manejar el caso donde solo se proporciona displayText
+                    if "displayText" in button_data and "buttonId" not in button_data:
+                        display_text = button_data["displayText"]
+                        button_data = {
+                            "buttonId": f"btn_{i + 1}",
+                            "buttonText": {"displayText": display_text},
+                            "type": 1
+                        }
                     # Si buttonText es un string, convertirlo al formato correcto
-                    if isinstance(button_data.get('buttonText'), str):
+                    elif isinstance(button_data.get('buttonText'), str):
                         button_data['buttonText'] = {'displayText': button_data['buttonText']}
+                    
                     button = ButtonModel(**button_data)
                     validated_buttons.append(button)
 
