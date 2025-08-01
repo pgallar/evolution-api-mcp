@@ -10,3 +10,4 @@ wheels/
 .venv
 .env
 logs/evolution_api_mcp.log
+*.log

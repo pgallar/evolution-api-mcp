@@ -298,12 +298,22 @@ class MessageRoutes(BaseRoutes):
             """Enviar mensaje con botones"""
             try:
                 self.client = MessageClient()
+                # Formatear los botones según la estructura requerida
+                formatted_buttons = []
+                for button in buttons:
+                    formatted_button = {
+                        "title": str(button.title),
+                        "displayText": str(button.displayText),
+                        "id": str(button.id)
+                    }
+                    formatted_buttons.append(formatted_button)
+
                 result = await self.client.send_buttons(
                     instance_name=instance_name,
                     number=str(number),
                     title=str(title),
                     description=str(description),
-                    buttons=[button.dict() for button in buttons],
+                    buttons=formatted_buttons,
                     footer=str(footer) if footer is not None else None,
                     delay=delay,
                     link_preview=link_preview,
