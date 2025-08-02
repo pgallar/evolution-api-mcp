@@ -1,48 +1,84 @@
 from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from ..base_routes import BaseRoutes
 from .client import MessageClient
 
 class ButtonModel(BaseModel):
     type: str = Field(description="Tipo de botón (reply, url, call, copy, pix)")
-    reply: Optional[Dict[str, str]] = Field(description="Datos del botón de respuesta")
-    url: Optional[str] = Field(description="URL para botón de enlace")
-    phoneNumber: Optional[str] = Field(description="Número de teléfono para botón de llamada")
-    copyCode: Optional[str] = Field(description="Código para botón de copiar")
-    displayText: Optional[str] = Field(description="Texto a mostrar en el botón")
-    id: Optional[str] = Field(description="Identificador único del botón")
-    currency: Optional[str] = Field(description="Moneda para botón PIX")
-    name: Optional[str] = Field(description="Nombre para botón PIX")
-    keyType: Optional[str] = Field(description="Tipo de clave PIX (phone, email, cpf, cnpj, random)")
-    key: Optional[str] = Field(description="Clave PIX")
+    reply: Optional[Dict[str, str]] = Field(default=None, description="Datos del botón de respuesta")
+    url: Optional[str] = Field(default=None, description="URL para botón de enlace")
+    phoneNumber: Optional[str] = Field(default=None, description="Número de teléfono para botón de llamada")
+    copyCode: Optional[str] = Field(default=None, description="Código para botón de copiar")
+    displayText: Optional[str] = Field(default=None, description="Texto a mostrar en el botón")
+    id: Optional[str] = Field(default=None, description="Identificador único del botón")
+    currency: Optional[str] = Field(default=None, description="Moneda para botón PIX")
+    name: Optional[str] = Field(default=None, description="Nombre para botón PIX")
+    keyType: Optional[str] = Field(default=None, description="Tipo de clave PIX (phone, email, cpf, cnpj, random)")
+    key: Optional[str] = Field(default=None, description="Clave PIX")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "type": "reply",
-                "reply": {
-                    "id": "btn_si",
-                    "title": "Sí"
-                }
+                "reply": {"id": "btn_1", "title": "Sí"},
+                "displayText": "Sí"
             }
         }
+        extra = "ignore"  # Ignora campos adicionales
+        validate_assignment = True
+        
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 class PTVModel(BaseModel):
     number: str = Field(description="Número de destino")
     video: str = Field(description="URL o base64 del video")
-    delay: Optional[int] = Field(description="Retraso en milisegundos")
-    quoted: Optional[Dict[str, Any]] = Field(description="Mensaje citado")
-    mentions_everyone: Optional[bool] = Field(description="Mencionar a todos")
-    mentioned: Optional[List[str]] = Field(description="Lista de números mencionados")
+    delay: Optional[int] = Field(default=None, description="Retraso en milisegundos")
+    quoted: Optional[Dict[str, Any]] = Field(default=None, description="Mensaje citado")
+    mentions_everyone: Optional[bool] = Field(default=None, description="Mencionar a todos")
+    mentioned: Optional[List[str]] = Field(default=None, description="Lista de números mencionados")
+
+    class Config:
+        extra = "ignore"
+        validate_assignment = True
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 class ListRowModel(BaseModel):
     title: str = Field(description="Título de la fila")
     description: str = Field(description="Descripción de la fila")
     rowId: str = Field(description="Identificador único de la fila")
 
+    class Config:
+        extra = "ignore"
+        validate_assignment = True
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+
 class ListSectionModel(BaseModel):
     title: str = Field(description="Título de la sección")
     rows: List[ListRowModel] = Field(description="Filas de la sección")
+
+    class Config:
+        extra = "ignore"
+        validate_assignment = True
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 class MessageRoutes(BaseRoutes):
     def register_tools(self, mcp):

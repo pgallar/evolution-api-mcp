@@ -1,10 +1,20 @@
 from typing import Dict, Any, List, Optional
 from ..http_client import EvolutionAPIClient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 
 class IntegrationConfig(BaseModel):
-    enabled: bool
-    events: List[str]
+    enabled: bool = Field(description="Si la integración está habilitada")
+    events: List[str] = Field(description="Lista de eventos a escuchar")
+
+    class Config:
+        extra = "ignore"
+        validate_assignment = True
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 class BaseIntegrationClient(EvolutionAPIClient):
     def __init__(self, integration_type: str):

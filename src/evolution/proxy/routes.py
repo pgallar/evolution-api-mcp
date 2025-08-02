@@ -1,15 +1,25 @@
 from typing import Dict, Any, Optional
 from fastapi import FastAPI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from ..base_routes import BaseRoutes
 
 class ProxyConfig(BaseModel):
-    enabled: bool = Field(description="Si el proxy está habilitado")
+    enabled: bool = Field(default=False, description="Si el proxy está habilitado")
     host: str = Field(description="Host del proxy")
     port: str = Field(description="Puerto del proxy")
     protocol: str = Field(description="Protocolo del proxy (http, https, socks)")
-    username: Optional[str] = Field(None, description="Usuario para autenticación del proxy")
-    password: Optional[str] = Field(None, description="Contraseña para autenticación del proxy")
+    username: Optional[str] = Field(default=None, description="Usuario para autenticación del proxy")
+    password: Optional[str] = Field(default=None, description="Contraseña para autenticación del proxy")
+
+    class Config:
+        extra = "ignore"
+        validate_assignment = True
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
 class ProxyRoutes(BaseRoutes):
     def register_tools(self, mcp: FastAPI):
